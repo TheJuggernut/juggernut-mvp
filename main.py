@@ -1,7 +1,7 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
+from datetime import datetime
 
 st.set_page_config(page_title="Juggernut MVP", layout="wide")
 
@@ -26,13 +26,43 @@ sector_data = pd.DataFrame({
 })
 st.dataframe(sector_data)
 
+# Options Income Tracker
+st.subheader("Options Income Tracker")
+options_data = pd.DataFrame({
+    "Ticker": ["AAPL", "TSLA", "NVDA"],
+    "Type": ["Call", "Put", "Call"],
+    "Strike": [190, 250, 420],
+    "Expiration": ["2025-08-15", "2025-08-22", "2025-09-05"],
+    "Premium ($)": [250, 320, 210],
+    "Current Value ($)": [120, 400, 190],
+    "Days Until Expiration": [
+        (datetime.strptime("2025-08-15", "%Y-%m-%d") - datetime.today()).days,
+        (datetime.strptime("2025-08-22", "%Y-%m-%d") - datetime.today()).days,
+        (datetime.strptime("2025-09-05", "%Y-%m-%d") - datetime.today()).days,
+    ]
+})
+st.dataframe(options_data)
+
+# Alert Logic
+alerts = []
+today = datetime.today()
+for _, row in options_data.iterrows():
+    days_left = (datetime.strptime(row['Expiration'], "%Y-%m-%d") - today).days
+    if days_left <= 3:
+        alerts.append(f"⚠ {row['Ticker']} {row['Type']} expiring in {days_left} day(s) ({row['Expiration']})")
+    if row['Type'] == "Call" and row['Strike'] < 200:
+        alerts.append(f"📈 {row['Ticker']} Call strike {row['Strike']} approaching!")
+
+if alerts:
+    st.warning("\n".join(alerts))
+
 # Goal Tracker
 st.subheader("Goal Tracker")
-goal = 1000000
-current_value = np.random.randint(50000, 250000)
+goal = 1_000_000
+current_value = np.random.randint(50_000, 250_000)
 st.metric(label="Portfolio Value", value=f"${current_value:,}", delta=f"{(current_value/goal*100):.2f}% to goal")
-
 st.progress(current_value/goal)
 
 # AI Suggestion Placeholder
-st.markdown("**AI Suggestion:** Increase allocation to outperforming sectors, consider options strategies for TSLA/NVDA based on volatility breakout.")
+st.markdown("**AI Suggestion:** Increase allocation to outperforming sectors, "
+            "consider options strategies for TSLA/NVDA based on volatility breakout.")
